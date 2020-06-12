@@ -256,10 +256,10 @@ float editValFloat;
 //=================================
 //             DEBUG
 //=================================
-//#define ENABLE_SERIAL 1
-//#define FORCE_VALUE_DEFAULTS 0
+#define ENABLE_SERIAL 1
+//#define FORCE_VALUE_DEFAULTS 1
 //#define FORCE_SERIAL 1
-//#define DUMP_EEPROM 0
+//#define DUMP_EEPROM 1
 
 //=====================================================================================================================
 //=====================================================================================================================
@@ -278,10 +278,6 @@ void setup()
 {
 #ifdef ENABLE_SERIAL
     Serial.begin(9600);
-    while(1) {
-        Serial.println("Hello");
-        delay(1000);
-    }
 #ifdef FORCE_SERIAL 
     while(!Serial) { ; }
 #endif
@@ -659,7 +655,7 @@ void buttonChangedA(int state) {
     handleInput(state == 0 ? BUTTON_A_UP : BUTTON_A_DOWN);
 }
 void buttonChangedB(int state) { 
-    handleInput(state == 0 ? BUTTON_B_UP : BUTTON_R_DOWN);
+    handleInput(state == 0 ? BUTTON_B_UP : BUTTON_B_DOWN);
 }
 
 
