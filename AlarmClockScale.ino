@@ -825,7 +825,7 @@ void buttonEncoder()
                 break;
             case MENUPOS_CALIBRATION:
                 editValFloat = calibrationWeight;
-                return;
+                break;
         }
 
         displayMenu();
