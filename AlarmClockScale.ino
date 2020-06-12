@@ -350,7 +350,7 @@ void setup()
 
     //Welcome message and tare
     lcdPrintCenter(F("AlarmClockScale"), 0);
-    lcdPrintCenter(F("v2.0.0"), 1);
+    lcdPrintCenter(F("v2.1.0"), 1);
     scale.tare();
     delay(2000);
     lcd.clear();
