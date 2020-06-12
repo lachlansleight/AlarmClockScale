@@ -150,12 +150,12 @@ LiquidCrystal_I2C lcd = LiquidCrystal_I2C(0x27, 16, 2);
 #include <EEPROM.h>
 
 #define ADDR_DEFAULTS 0
-#define ADDR_ALARM_A_ARMED 1
-#define ADDR_ALARM_A_HOUR 2
-#define ADDR_ALARM_A_MINUTE 3
-#define ADDR_ALARM_B_ARMED 4
-#define ADDR_ALARM_B_HOUR 5
-#define ADDR_ALARM_B_MINUTE 6
+#define ADDR_ALARM_ARMED_A 1
+#define ADDR_ALARM_HOUR_A 2
+#define ADDR_ALARM_MINUTE_A 3
+#define ADDR_ALARM_ARMED_B 4
+#define ADDR_ALARM_HOUR_B 5
+#define ADDR_ALARM_MINUTE_B 6
 #define ADDR_DISARM_DURATION 7
 #define ADDR_DISARM_TOLERANCE 8
 #define ADDR_DISARM_REQUIREMENT 9
@@ -256,7 +256,7 @@ float editValFloat;
 //=================================
 //             DEBUG
 //=================================
-#define ENABLE_SERIAL 1
+//#define ENABLE_SERIAL 1
 //#define FORCE_VALUE_DEFAULTS 1
 //#define FORCE_SERIAL 1
 //#define DUMP_EEPROM 1
@@ -382,12 +382,12 @@ void loadDataFromEEPROM()
 
         EEPROM.write(ADDR_DEFAULTS, 101);
     } else {
-        curVal[ALARM_ARMED_A] = EEPROM.read(ADDR_ALARM_A_ARMED);
-        curVal[ALARM_HOUR_A] = EEPROM.read(ADDR_ALARM_A_HOUR);
-        curVal[ALARM_MINUTE_A] = EEPROM.read(ADDR_ALARM_A_MINUTE);
-        curVal[ALARM_ARMED_B] = EEPROM.read(ADDR_ALARM_B_ARMED);
-        curVal[ALARM_HOUR_B] = EEPROM.read(ADDR_ALARM_B_HOUR);
-        curVal[ALARM_MINUTE_B] = EEPROM.read(ADDR_ALARM_B_MINUTE);
+        curVal[ALARM_ARMED_A] = EEPROM.read(ADDR_ALARM_ARMED_A);
+        curVal[ALARM_HOUR_A] = EEPROM.read(ADDR_ALARM_HOUR_A);
+        curVal[ALARM_MINUTE_A] = EEPROM.read(ADDR_ALARM_MINUTE_A);
+        curVal[ALARM_ARMED_B] = EEPROM.read(ADDR_ALARM_ARMED_B);
+        curVal[ALARM_HOUR_B] = EEPROM.read(ADDR_ALARM_HOUR_B);
+        curVal[ALARM_MINUTE_B] = EEPROM.read(ADDR_ALARM_MINUTE_B);
 
         curVal[DISARM_DURATION] = EEPROM.read(ADDR_DISARM_DURATION);
         curVal[DISARM_TOLERANCE] = EEPROM.read(ADDR_DISARM_TOLERANCE);
@@ -848,13 +848,13 @@ void buttonEncoder()
                     curVal[ALARM_MINUTE_A] = editMinute;
 
                     if(preHour != curVal[ALARM_HOUR_A]) {
-                        EEPROM.write(ADDR_ALARM_A_HOUR, curVal[ALARM_HOUR_A]);
+                        EEPROM.write(ADDR_ALARM_HOUR_A, curVal[ALARM_HOUR_A]);
                         #ifdef ENABLE_SERIAL
                         dumpEEPROM();
                         #endif
                     }
                     if(preMin != curVal[ALARM_MINUTE_A]) {
-                        EEPROM.write(ADDR_ALARM_A_MINUTE, curVal[ALARM_MINUTE_A]);
+                        EEPROM.write(ADDR_ALARM_MINUTE_A, curVal[ALARM_MINUTE_A]);
                         #ifdef ENABLE_SERIAL
                         dumpEEPROM();
                         #endif
@@ -868,14 +868,14 @@ void buttonEncoder()
                     curVal[ALARM_MINUTE_B] = editMinute;
 
                     if(preHour != curVal[ALARM_HOUR_B]) {
-                        EEPROM.write(ADDR_ALARM_B_HOUR, curVal[ALARM_HOUR_B]);
+                        EEPROM.write(ADDR_ALARM_HOUR_B, curVal[ALARM_HOUR_B]);
                         
                         #ifdef ENABLE_SERIAL
                         dumpEEPROM();
                         #endif
                     }
                     if(preMin != curVal[ALARM_MINUTE_B]) {
-                        EEPROM.write(ADDR_ALARM_B_MINUTE, curVal[ALARM_MINUTE_B]);                    
+                        EEPROM.write(ADDR_ALARM_MINUTE_B, curVal[ALARM_MINUTE_B]);                    
                         
                         #ifdef ENABLE_SERIAL
                         dumpEEPROM();
@@ -918,7 +918,7 @@ void buttonEncoder()
             pre = curVal[ALARM_ARMED_A];
             curVal[ALARM_ARMED_A] = editVal;
             if(curVal[ALARM_ARMED_A] != pre) {
-                EEPROM.write(ADDR_ALARM_B_ARMED, curVal[ALARM_ARMED_A]);
+                EEPROM.write(ADDR_ALARM_ARMED_B, curVal[ALARM_ARMED_A]);
                 
                 #ifdef ENABLE_SERIAL
                 dumpEEPROM();
@@ -929,7 +929,7 @@ void buttonEncoder()
             pre = curVal[ALARM_ARMED_B];
             curVal[ALARM_ARMED_B] = editVal;
             if(curVal[ALARM_ARMED_B] != pre) {
-                EEPROM.write(ADDR_ALARM_A_ARMED, curVal[ALARM_ARMED_B]);
+                EEPROM.write(ADDR_ALARM_ARMED_A, curVal[ALARM_ARMED_B]);
                 
                 #ifdef ENABLE_SERIAL
                 dumpEEPROM();
@@ -1033,9 +1033,58 @@ void buttonB()
             timeEditing = false;
         } else {
             menuEditing = false;
+            //except for if we're editing the time - there is no 'default'
+            if(menuPosition == MENUPOS_TIME) {
+                lcdPrintCenter("Discarding", 1);
+                delay(1000);
+                displayMenu();
+                return;
+            }
             lcdPrint("Reset to Default", 1);
             delay(700);
-            //TODO
+            switch(menuPosition) {
+                case MENUPOS_ALARM_ARMED_A:
+                    curVal[ALARM_ARMED_A] = defaultVal[ALARM_ARMED_A];
+                    EEPROM.write(ADDR_ALARM_ARMED_A, curVal[ALARM_ARMED_A]);
+                    break;
+                case MENUPOS_ALARM_TIME_A:
+                    curVal[ALARM_HOUR_A] = defaultVal[ALARM_HOUR_A];
+                    EEPROM.write(ADDR_ALARM_HOUR_A, curVal[ALARM_HOUR_A]);
+                    curVal[ALARM_MINUTE_A] = defaultVal[ALARM_MINUTE_A];
+                    EEPROM.write(ADDR_ALARM_MINUTE_A, curVal[ALARM_MINUTE_A]);
+                    break;
+                case MENUPOS_ALARM_ARMED_B:
+                    curVal[ALARM_ARMED_B] = defaultVal[ALARM_ARMED_B];
+                    EEPROM.write(ADDR_ALARM_ARMED_B, curVal[ALARM_ARMED_B]);
+                    break;
+                case MENUPOS_ALARM_TIME_B:
+                    curVal[ALARM_HOUR_B] = defaultVal[ALARM_HOUR_B];
+                    EEPROM.write(ADDR_ALARM_HOUR_B, curVal[ALARM_HOUR_B]);
+                    curVal[ALARM_MINUTE_B] = defaultVal[ALARM_MINUTE_B];
+                    EEPROM.write(ADDR_ALARM_MINUTE_B, curVal[ALARM_MINUTE_B]);
+                    break;
+                case MENUPOS_DISARM_DURATION:
+                    curVal[DISARM_DURATION] = defaultVal[DISARM_DURATION];
+                    EEPROM.write(ADDR_DISARM_DURATION, curVal[DISARM_DURATION]);
+                    break;
+                case MENUPOS_DISARM_TOLERANCE:
+                    curVal[DISARM_TOLERANCE] = defaultVal[DISARM_TOLERANCE];
+                    EEPROM.write(ADDR_DISARM_TOLERANCE, curVal[DISARM_TOLERANCE]);
+                    break;
+                case MENUPOS_DISARM_REQUIREMENT:
+                    curVal[DISARM_REQUIREMENT] = defaultVal[DISARM_REQUIREMENT];
+                    EEPROM.write(ADDR_DISARM_REQUIREMENT, curVal[DISARM_REQUIREMENT]);
+                    break;
+                case MENUPOS_BEEP_PATTERN:
+                    curVal[BEEP_PATTERN] = defaultVal[BEEP_PATTERN];
+                    EEPROM.write(ADDR_BEEP_PATTERN, curVal[BEEP_PATTERN]);
+                    break;
+                case MENUPOS_CALIBRATION:
+                    calibrationWeight = calibrationWeightDefault;
+                    EEPROM.write(ADDR_CALIBRATION_WEIGHT_INT, (int)calibrationWeight);
+                    EEPROM.write(ADDR_CALIBRATION_WEIGHT_DEC, calibrationWeight - (int)calibrationWeight);
+                    break;
+            }
         }
         displayMenu();
     } else {
