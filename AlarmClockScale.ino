@@ -112,9 +112,10 @@ float calibrationWeightDefault = 60.0;
 #endif
 
 #define PATTERN_COUNT 5
+#define RESONANT_PITCH 2650
 
 #define PATTERN_ALARM 0
-#define PATTERN_CHIME 1
+#define PATTERN_WAIL 1
 #define PATTERN_PIPS 2
 #define PATTERN_RANDOM 3
 #define PATTERN_ESCALATING 4
@@ -126,9 +127,13 @@ long alarmTriggeredTime = 0;
 long disarmCounter = 0;
 long toleranceCounter = 0;
 
+long onTime = 0;
+long offTime = 0;
+byte beepSequence = 0;
+
 const char beepModeNames[][16] = {
     "Alarm",
-    "Chime",
+    "Wail",
     "Pips",
     "Random",
     "Escalating"
@@ -203,7 +208,7 @@ byte defaultVal[] = {
     240,            //240 second disarm duration
     10,             //10 second disarm tolerance
     50,             //50kg alarm disarm requirement
-    PATTERN_CHIME   //'chime' pattern
+    PATTERN_WAIL   //'chime' pattern
 };
 //if the user edits the time, we stop actually using the real clock to update it, instead
 //when editing starts we set these to the current time and use them in the menu until the new time is applied
@@ -1169,6 +1174,14 @@ void updateTime()
     }
 }
 
+void triggerAlarm()
+{
+  alarmTriggeredTime = millis();
+  onTime = millis();
+  offTime = millis();
+  beepSequence = 0;
+}
+
 void alarmLoop()
 {
     //don't do anything if the alarm hasn't been triggered
@@ -1235,49 +1248,64 @@ void alarmWarning()
 
 void alarmBeep()
 {
-    //for now, just beep for 1/10th of a second every second
     switch(curVal[BEEP_PATTERN]) {
         case PATTERN_ALARM:
-            if(millis() % 1000 < 100) {
-                tone(PIN_BUZZER, 3000);
-            } else {
-                noTone(PIN_BUZZER);
+            if(onTime > 0 && onTime < millis()) {
+              offTime = millis() + 100;
+              onTime = -1;
+              tone(PIN_BUZZER, RESONANT_PITCH);
+            } else if(offTime > 0 && offTime < millis()) {
+              onTime = millis() + 100;
+              offTime = -1;            
+              noTone(PIN_BUZZER);
             }
-        break;
-        case PATTERN_CHIME:
-            if(millis() % 1000 < 100) {
-                tone(PIN_BUZZER, 3000);
-            } else {
-                noTone(PIN_BUZZER);
-            }
-        break;
+          break;
+        case PATTERN_WAIL:
+          tone(PIN_BUZZER, RESONANT_PITCH + ((millis() % 1000) / 200) - 25);
+          break;
         case PATTERN_PIPS:
-            if(millis() % 1000 < 500) {
-                int pitch = (int)((millis() % 1000) / 100);
-                if(pitch == 0) tone(PIN_BUZZER, 3200);
-                else if(pitch == 1) tone(PIN_BUZZER, 4000);
-                else if(pitch == 2) tone(PIN_BUZZER, 3200);
-                else if(pitch == 3) tone(PIN_BUZZER, 4000);
-                else tone(PIN_BUZZER, 3600);
-            } else noTone(PIN_BUZZER);
-            break;
+            if(onTime > 0 && onTime < millis()) {              
+              offTime = millis() + 50;
+              onTime = -1;
+              tone(PIN_BUZZER, RESONANT_PITCH);
+            } else if(offTime > 0 && offTime < millis()) {
+              if(beepSequence == 0) onTime = millis() + 400;
+              else if(beepSequence == 1) onTime = millis() + 400;
+              else if(beepSequence == 2) onTime = millis() + 400;
+              else if(beepSequence == 3) onTime = millis() + 100;
+              else if(beepSequence == 4) onTime = millis() + 100;
+              beepSequence++;
+              if(beepSequence >= 5) beepSequence = 0;
+              offTime = -1;
+              noTone(PIN_BUZZER);
+            }
+          break;
         case PATTERN_RANDOM:
-            if(millis() % 200 < 100) {
-                tone(PIN_BUZZER, random(2000, 4000));
-            } else {
-                noTone(PIN_BUZZER);
+            if(onTime > 0 && onTime < millis()) {
+              offTime = millis() + random(20, 500);
+              onTime = -1;
+              tone(PIN_BUZZER, RESONANT_PITCH);             
+            } else if(offTime > 0 && offTime < millis()) {
+              onTime = millis() + random(20, 500);
+              offTime = -1;
+              noTone(PIN_BUZZER);              
             }
             break;
         case PATTERN_ESCALATING:
-            if(millis() % 1000 < 100) {
-                tone(PIN_BUZZER, 3000);
-            } else {
-                noTone(PIN_BUZZER);
+            //Starts out as 50ms on, 2150ms off - after 30 seconds is 200ms on, 50ms off
+            int timeSinceLerp = ((millis() - alarmTriggeredTime) / 1000);
+            if(timeSinceLerp > 30) timeSinceLerp = 30;
+            if(onTime > 0 && onTime < millis()) {
+              offTime = millis() + (50 + (5 * timeSinceLerp));
+              onTime = -1;
+              tone(PIN_BUZZER, RESONANT_PITCH);             
+            } else if(offTime > 0 && offTime < millis()) {
+              onTime = millis() + 150 + (2000 - 70 * timeSinceLerp);
+              offTime = -1;
+              noTone(PIN_BUZZER);              
             }
             break;
     }
-
-    //TODO: add BeepMode-controlled buzz frequency / time patterns!
 }
 
 //=================================
