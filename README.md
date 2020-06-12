@@ -1,5 +1,5 @@
-# MaatFirmware
-Firmware for Maat - an alarm clock that you have to stand on for several minutes to disarm
+# AlarmClockScale
+Firmware for the AlarmClockScale - an alarm clock that you have to stand on for several minutes to disarm
 
 # Temporary User Guide
 
