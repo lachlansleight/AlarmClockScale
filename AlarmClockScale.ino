@@ -1147,39 +1147,36 @@ void updateTime()
     timestamp = t.hr * 60 + t.min;
     currentTimeString = getTimeString(t.hr, t.min);
     currentHour = t.hr;
-    currentMinute = t.min;
+    currentMinute = t.min; 
 
-    if(timestamp != lastTimestamp && !(alarmTriggeredA || alarmTriggeredB)) {
-        int timestampA = curVal[ALARM_HOUR_A] * 60 + curVal[ALARM_MINUTE_A];
-        int timestampB = curVal[ALARM_HOUR_B] * 60 + curVal[ALARM_MINUTE_B];
+    if(timestamp == lastTimestamp) return;
+    if(alarmTriggeredA || alarmTriggeredB) return;
 
-        if(timestamp == timestampA) {
-            alarmTriggeredA = true;
-        } else if(timestamp == timestampB) {
-            alarmTriggeredB = true;
-        }
+    //Check if the current time is equal to the time that either alarm should be triggered at
+    if(timestamp == curVal[ALARM_HOUR_A] * 60 + curVal[ALARM_MINUTE_A]) {
+        alarmTriggeredA = true;
+    } else if(timestamp == curVal[ALARM_HOUR_B] * 60 + curVal[ALARM_MINUTE_B]) {
+        alarmTriggeredB = true;
+    }
 
-        if(alarmTriggeredA || alarmTriggeredB) {
-            //if we triggered the alarm, disable the menu etc
-            alarmTriggeredTime = millis();
-            if(menuShowing) {
-                setMenu(false);
-            }
-        } else {
-            //if not, and we're not currently in the menu, update the time display on the home screen
-            if(!menuShowing) {
-                lcdPrintCenter(currentTimeString, 0);
-            }
-        }
+    //If so, trigger the alarm!
+    if(alarmTriggeredA || alarmTriggeredB) {
+        triggerAlarm();
+    } else if(!menuShowing) {
+        //if not, and we're not currently in the menu, update the time display on the home screen
+        lcdPrintCenter(currentTimeString, 0);
     }
 }
 
 void triggerAlarm()
 {
-  alarmTriggeredTime = millis();
-  onTime = millis();
-  offTime = millis();
-  beepSequence = 0;
+    alarmTriggeredTime = millis();
+    onTime = millis();
+    offTime = millis();
+    beepSequence = 0;
+    if(menuShowing) {
+        setMenu(false);
+    }
 }
 
 void alarmLoop()
