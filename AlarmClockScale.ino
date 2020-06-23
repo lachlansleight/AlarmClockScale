@@ -2,6 +2,7 @@
 //           ALARM CLOCK SCALE FIRMWARE       
 //                    v2.2.1                
 //=============================================
+#define VERSION "v2.2.1"
 
 #define VARIANT_PCB 1
 //#define VARIANT_LEGACY 1
@@ -350,7 +351,7 @@ void setup()
 
     //Welcome message and tare
     lcdPrintCenter(F("AlarmClockScale"), 0);
-    lcdPrintCenter(F("v2.1.0"), 1);
+    lcdPrintCenter(F(VERSION), 1);
     scale.tare();
     delay(2000);
     lcd.clear();
