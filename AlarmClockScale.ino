@@ -1153,9 +1153,9 @@ void updateTime()
     if(alarmTriggeredA || alarmTriggeredB) return;
 
     //Check if the current time is equal to the time that either alarm should be triggered at
-    if(timestamp == curVal[ALARM_HOUR_A] * 60 + curVal[ALARM_MINUTE_A]) {
+    if(timestamp == curVal[ALARM_HOUR_A] * 60 + curVal[ALARM_MINUTE_A] && curVal[ALARM_ARMED_A] > 0) {
         alarmTriggeredA = true;
-    } else if(timestamp == curVal[ALARM_HOUR_B] * 60 + curVal[ALARM_MINUTE_B]) {
+    } else if(timestamp == curVal[ALARM_HOUR_B] * 60 + curVal[ALARM_MINUTE_B] && curVal[ALARM_ARMED_B] > 0) {
         alarmTriggeredB = true;
     }
 
