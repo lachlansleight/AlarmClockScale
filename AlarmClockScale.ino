@@ -1213,7 +1213,13 @@ void alarmLoop()
             alarmTriggeredB = false;
             disarmCounter = 0;
             toleranceCounter = 0;
-            delay(2000);
+            for(int i = 0; i < 5; i++) {
+              tone(PIN_BUZZER, RESONANT_PITCH);
+              delay(50);
+              noTone(PIN_BUZZER);
+              delay(200);
+            }
+            delay(1000);
             setMenu(false);
         }
     } else {
