@@ -1,8 +1,8 @@
 //=============================================
 //           ALARM CLOCK SCALE FIRMWARE       
-//                    v2.2.2                
+//                    v2.3.0                
 //=============================================
-#define VERSION "v2.2.2"
+#define VERSION "v2.3.0"
 
 //=================================
 //       VARIANT CONFIG
@@ -188,6 +188,7 @@ LiquidCrystal_I2C lcd = LiquidCrystal_I2C(0x27, 16, 2);
 #define DISARM_TOLERANCE 7
 #define DISARM_REQUIREMENT 8
 #define BEEP_PATTERN 9
+#define SKIP_NEXT 10
 
 #define MENUPOS_ALARM_ARMED_A 0
 #define MENUPOS_ALARM_TIME_A 1
@@ -198,14 +199,15 @@ LiquidCrystal_I2C lcd = LiquidCrystal_I2C(0x27, 16, 2);
 #define MENUPOS_DISARM_TOLERANCE 6
 #define MENUPOS_DISARM_REQUIREMENT 7
 #define MENUPOS_BEEP_PATTERN 8
-#define MENUPOS_CALIBRATION 9
+#define MENUPOS_SKIP_NEXT 9
+#define MENUPOS_CALIBRATION 10
 
 #define TIMEPOS_APPLY 0
 #define TIMEPOS_HOUR 1
 #define TIMEPOS_MINUTE 2
 #define TIMEPOS_AMPM 3
 
-#define VAL_COUNT 10
+#define VAL_COUNT 11
 byte curVal[VAL_COUNT]; //loaded from EEPROM during setup, or set to defaults if EEPROM not initialized
 byte defaultVal[] = {
     false, 7, 0,    //alarm A disarmed for 7am
@@ -213,7 +215,8 @@ byte defaultVal[] = {
     240,            //240 second disarm duration
     10,             //10 second disarm tolerance
     50,             //50kg alarm disarm requirement
-    PATTERN_WAIL   //'chime' pattern
+    PATTERN_WAIL,   //'wail' pattern
+    false           //skip next
 };
 //if the user edits the time, we stop actually using the real clock to update it, instead
 //when editing starts we set these to the current time and use them in the menu until the new time is applied
@@ -222,7 +225,7 @@ byte defaultVal[] = {
 //=================================
 //            MENU STUFF
 //=================================
-#define MENU_COUNT 10
+#define MENU_COUNT 11
 
 boolean menuShowing = false;
 boolean menuEditing = false;
@@ -241,6 +244,7 @@ const char menuNames[][16] = {
     "Disarm Tol.",
     "Disarm Req.",
     "Beep Pattern",
+    "Skip Next",
     "Calibration"
 };
 
@@ -589,6 +593,9 @@ void displayMenu()
         case MENUPOS_BEEP_PATTERN:
             lcdPrintCenter(beepModeNames[editVal], 1);
             break;
+        case MENUPOS_SKIP_NEXT:
+            lcdPrintCenter(editVal > 0 ? "SKIP" : "DON'T SKIP", 1);
+            break;
         case MENUPOS_CALIBRATION:
             lcdPrintCenter(String(editValFloat) + " kg", 1);
             break;
@@ -611,7 +618,6 @@ void setMenu(boolean on)
         lcd.noBacklight();
         lcd.clear();
         lcdPrintCenter(currentTimeString, 0);
-        lastTimestamp = 0;
     }
 }
 
@@ -781,6 +787,9 @@ void updateValue(int offset)
             else if(editVal >= (PATTERN_COUNT - 1) && offset > 0) editVal = 0;
             else editVal += offset;
             break;
+        case MENUPOS_SKIP_NEXT:
+            editVal = editVal > 0 ? 0 : 1;
+            break;
         case MENUPOS_CALIBRATION:
             if(editValFloat <= 0.5 && offset < 0) editValFloat = 100.0;
             else if(editValFloat >= 100.0 && offset > 0) editValFloat = 0.5;
@@ -832,6 +841,9 @@ void buttonEncoder()
                 break;
             case MENUPOS_BEEP_PATTERN:
                 editVal = curVal[BEEP_PATTERN];
+                break;
+            case MENUPOS_SKIP_NEXT:
+                editVal = curVal[SKIP_NEXT];
                 break;
             case MENUPOS_CALIBRATION:
                 editValFloat = calibrationWeight;
@@ -924,7 +936,7 @@ void buttonEncoder()
     //Also write to the EEPROM!
     byte pre;
     switch(menuPosition) {
-        case 0:
+        case MENUPOS_ALARM_ARMED_A:
             pre = curVal[ALARM_ARMED_A];
             curVal[ALARM_ARMED_A] = editVal;
             if(curVal[ALARM_ARMED_A] != pre) {
@@ -935,7 +947,7 @@ void buttonEncoder()
                 #endif
             }
             break;
-        case 2:
+        case MENUPOS_ALARM_ARMED_B:
             pre = curVal[ALARM_ARMED_B];
             curVal[ALARM_ARMED_B] = editVal;
             if(curVal[ALARM_ARMED_B] != pre) {
@@ -946,7 +958,7 @@ void buttonEncoder()
                 #endif
             }
             break;
-        case 5:
+        case MENUPOS_DISARM_DURATION:
             pre = curVal[DISARM_DURATION];
             curVal[DISARM_DURATION] = editVal;
             if(curVal[DISARM_DURATION] != pre) {
@@ -957,7 +969,7 @@ void buttonEncoder()
                 #endif
             }
             break;
-        case 6:
+        case MENUPOS_DISARM_TOLERANCE:
             pre = curVal[DISARM_TOLERANCE];
             curVal[DISARM_TOLERANCE] = editVal;
             if(curVal[DISARM_TOLERANCE] != pre) {
@@ -968,7 +980,7 @@ void buttonEncoder()
                 #endif
             }
             break;
-        case 7:
+        case MENUPOS_DISARM_REQUIREMENT:
             pre = curVal[DISARM_REQUIREMENT];
             curVal[DISARM_REQUIREMENT] = editVal;
             if(curVal[DISARM_REQUIREMENT] != pre) {
@@ -979,7 +991,7 @@ void buttonEncoder()
                 #endif
             }
             break;
-        case 8:
+        case MENUPOS_BEEP_PATTERN:
             pre = curVal[BEEP_PATTERN];
             curVal[BEEP_PATTERN] = editVal;
             if(curVal[BEEP_PATTERN] != pre) {
@@ -990,6 +1002,12 @@ void buttonEncoder()
                 #endif
             }
             break;
+        case MENUPOS_SKIP_NEXT:
+          pre = curVal[SKIP_NEXT];
+          curVal[SKIP_NEXT] = editVal;
+          if(curVal[SKIP_NEXT] != pre) {
+            //no actual EEPROM writing, we don't want to save this I don't think!
+          }
     }
 
     menuEditing = false;
@@ -1089,6 +1107,10 @@ void buttonB()
                     curVal[BEEP_PATTERN] = defaultVal[BEEP_PATTERN];
                     EEPROM.write(ADDR_BEEP_PATTERN, curVal[BEEP_PATTERN]);
                     break;
+                case MENUPOS_SKIP_NEXT:
+                    curVal[SKIP_NEXT] = false;
+                    //no need to write EEPROM
+                    break;
                 case MENUPOS_CALIBRATION:
                     calibrationWeight = calibrationWeightDefault;
                     EEPROM.write(ADDR_CALIBRATION_WEIGHT_INT, (int)calibrationWeight);
@@ -1155,6 +1177,7 @@ void updateTime()
     currentMinute = t.min; 
 
     if(timestamp == lastTimestamp) return;
+    
     if(alarmTriggeredA || alarmTriggeredB) return;
 
     //Check if the current time is equal to the time that either alarm should be triggered at
@@ -1164,7 +1187,21 @@ void updateTime()
         alarmTriggeredB = true;
     }
 
-    //If so, trigger the alarm!
+    //If we just triggered an alarm, check to see if we should skip it
+    //If so, display some feedback, un-trigger the alarm, and proceed as normal
+    if((alarmTriggeredA || alarmTriggeredB) && curVal[SKIP_NEXT]) {
+        curVal[SKIP_NEXT] = false;
+        lcd.backlight();
+        lcdPrintCenter("Skipping Alarm", 1);
+        delay(2000);
+        lcdPrintCenter("", 1);
+        lcd.noBacklight();
+
+        alarmTriggeredA = false;
+        alarmTriggeredB = false;
+    }
+
+    //If so, trigger the alarm (unless we're skipping)!
     if(alarmTriggeredA || alarmTriggeredB) {
         triggerAlarm();
     } else if(!menuShowing) {
@@ -1213,11 +1250,11 @@ void alarmLoop()
             alarmTriggeredB = false;
             disarmCounter = 0;
             toleranceCounter = 0;
-            for(int i = 0; i < 5; i++) {
+            for(int i = 0; i < 4; i++) {
               tone(PIN_BUZZER, RESONANT_PITCH);
               delay(50);
               noTone(PIN_BUZZER);
-              delay(200);
+              delay(100);
             }
             delay(1000);
             setMenu(false);
