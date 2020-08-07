@@ -1247,7 +1247,7 @@ void alarmLoop()
 //for warning the user to get  back on
 void alarmWarning()
 {
-    if(millis() % 1000 < 10) {
+    if(millis() % 1000 < 50) {
         tone(PIN_BUZZER, 2000);
     } else {
         noTone(PIN_BUZZER);
