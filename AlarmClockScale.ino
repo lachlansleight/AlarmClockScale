@@ -1294,8 +1294,8 @@ void alarmBeep()
             }
             break;
         case PATTERN_ESCALATING:
-            //Starts out as 50ms on, 2150ms off - after 30 seconds is 200ms on, 50ms off
-            int timeSinceLerp = ((millis() - alarmTriggeredTime) / 1000);
+            //Starts out as 50ms on, 2150ms off - after 120 seconds is 200ms on, 50ms off
+            int timeSinceLerp = ((millis() - alarmTriggeredTime) / 250);
 
             //actually, make it 60 seconds
             //the math is all assuming 30 seconds so just modify this multiplier in the future
