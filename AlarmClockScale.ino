@@ -1,8 +1,12 @@
 //=============================================
 //           ALARM CLOCK SCALE FIRMWARE       
-//                    v2.2.1                
+//                    v2.2.2                
 //=============================================
-#define VERSION "v2.2.1"
+#define VERSION "v2.2.2"
+
+//=================================
+//       VARIANT CONFIG
+//=================================
 
 #define VARIANT_PCB 1
 //#define VARIANT_LEGACY 1
@@ -924,7 +928,7 @@ void buttonEncoder()
             pre = curVal[ALARM_ARMED_A];
             curVal[ALARM_ARMED_A] = editVal;
             if(curVal[ALARM_ARMED_A] != pre) {
-                EEPROM.write(ADDR_ALARM_ARMED_B, curVal[ALARM_ARMED_A]);
+                EEPROM.write(ADDR_ALARM_ARMED_A, curVal[ALARM_ARMED_A]);
                 
                 #ifdef ENABLE_SERIAL
                 dumpEEPROM();
@@ -935,7 +939,7 @@ void buttonEncoder()
             pre = curVal[ALARM_ARMED_B];
             curVal[ALARM_ARMED_B] = editVal;
             if(curVal[ALARM_ARMED_B] != pre) {
-                EEPROM.write(ADDR_ALARM_ARMED_A, curVal[ALARM_ARMED_B]);
+                EEPROM.write(ADDR_ALARM_ARMED_B, curVal[ALARM_ARMED_B]);
                 
                 #ifdef ENABLE_SERIAL
                 dumpEEPROM();
@@ -1335,7 +1339,13 @@ void updateScale()
             lcdPrint("", 1);
             lcd.noBacklight();
         }
-    }    
+    }
+
+#ifdef ENABLE_SERIAL
+    if(random(0, 10) == 3) {
+      Serial.println(scaleReading);
+    }
+#endif
 }
 
 void calibrateScale()
